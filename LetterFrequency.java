@@ -29,12 +29,16 @@ public class LetterFrequency {
         // Create a map to store letter frequencies
         Map<Character, Integer> frequencies = new HashMap<>();
         
-        // Count frequencies and total letters
+        // Count frequencies, total letters and total characters
         int totalLetters = 0;
+        int totalCharacters = 0;
         for (char c : processedText.toCharArray()) {
             if (Character.isLetter(c)) {
                 frequencies.put(c, frequencies.getOrDefault(c, 0) + 1);
                 totalLetters++;
+            }
+            if (c != '\n') {  // Don't count newline characters
+                totalCharacters++;
             }
         }
         
@@ -51,6 +55,7 @@ public class LetterFrequency {
         System.out.println("\nText Analysis Summary:");
         System.out.println("Total words: " + totalWords);
         System.out.println("Total letters: " + totalLetters);
+        System.out.println("Total characters (including spaces, punctuation): " + totalCharacters);
         
         // Display letter frequencies
         System.out.println("\nLetter frequencies:");
