@@ -29,14 +29,30 @@ public class LetterFrequency {
         // Create a map to store letter frequencies
         Map<Character, Integer> frequencies = new HashMap<>();
         
-        // Count frequencies
+        // Count frequencies and total letters
+        int totalLetters = 0;
         for (char c : processedText.toCharArray()) {
             if (Character.isLetter(c)) {
                 frequencies.put(c, frequencies.getOrDefault(c, 0) + 1);
+                totalLetters++;
             }
         }
         
-        // Display results
+        // Count words
+        String[] words = processedText.split("\\s+");
+        int totalWords = 0;
+        for (String word : words) {
+            if (!word.trim().isEmpty()) {
+                totalWords++;
+            }
+        }
+        
+        // Display summary
+        System.out.println("\nText Analysis Summary:");
+        System.out.println("Total words: " + totalWords);
+        System.out.println("Total letters: " + totalLetters);
+        
+        // Display letter frequencies
         System.out.println("\nLetter frequencies:");
         frequencies.entrySet().stream()
             .sorted(Map.Entry.comparingByKey())
