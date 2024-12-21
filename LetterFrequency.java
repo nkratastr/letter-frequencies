@@ -15,16 +15,34 @@ public class LetterFrequency {
 
     public static void main(String[] args) {
         Scanner textInputScanner = new Scanner(System.in);
-        StringBuilder textInputBuilder = new StringBuilder();
+        String normalizedText = getUserInput(textInputScanner);
         
+        // Validate the input text
+        if (!validateText(normalizedText)) {
+            textInputScanner.close();
+            return;
+        }
+
+        // Process text and get statistics
+        TextStatistics stats = processText(normalizedText);
+        
+        // Display results
+        displaySummary(stats);
+        displayLetterFrequencies(stats.letterFrequencyMap, stats.totalLetters);
+        displayLanguageAnalysis(stats.letterFrequencyMap, stats.totalLetters);
+        
+        textInputScanner.close();
+    }
+
+    private static String getUserInput(Scanner scanner) {
+        StringBuilder textInputBuilder = new StringBuilder();
         System.out.println("Enter or paste your text (press Enter twice to finish):");
         String currentInputLine;
         String previousInputLine = null;
         
-        while (textInputScanner.hasNextLine()) {
-            currentInputLine = textInputScanner.nextLine();
+        while (scanner.hasNextLine()) {
+            currentInputLine = scanner.nextLine();
             
-            // Check for two consecutive empty lines to end input
             if (currentInputLine.trim().isEmpty() && previousInputLine != null && previousInputLine.trim().isEmpty()) {
                 break;
             }
@@ -33,37 +51,36 @@ public class LetterFrequency {
             previousInputLine = currentInputLine;
         }
         
-        // Convert text to lowercase to count letters regardless of case
-        String normalizedText = textInputBuilder.toString().toLowerCase();
-        
-        // Validate the input text
-        TextValidator validator = new TextValidator(normalizedText);
+        return textInputBuilder.toString().toLowerCase();
+    }
+
+    private static boolean validateText(String text) {
+        TextValidator validator = new TextValidator(text);
         TextValidator.ValidationResult validationResult = validator.validate();
         
         if (!validationResult.isValid()) {
             System.out.println(validationResult.getMessage());
-            textInputScanner.close();
-            return;
+            return false;
         }
-        
-        // Create a map to store letter frequencies
+        return true;
+    }
+
+    private static TextStatistics processText(String text) {
         Map<Character, Integer> letterFrequencyMap = new HashMap<>();
-        
-        // Count frequencies, total letters and total characters
         int totalLetters = 0;
         int totalCharacters = 0;
-        for (char currentChar : normalizedText.toCharArray()) {
+        
+        for (char currentChar : text.toCharArray()) {
             if (Character.isLetter(currentChar)) {
                 letterFrequencyMap.put(currentChar, letterFrequencyMap.getOrDefault(currentChar, 0) + 1);
                 totalLetters++;
             }
-            if (currentChar != '\n') {  // Don't count newline characters
+            if (currentChar != '\n') {
                 totalCharacters++;
             }
         }
         
-        // Count words
-        String[] words = normalizedText.split("\\s+");
+        String[] words = text.split("\\s+");
         int wordCount = 0;
         for (String word : words) {
             if (!word.trim().isEmpty()) {
@@ -71,16 +88,19 @@ public class LetterFrequency {
             }
         }
         
-        // Display summary
+        return new TextStatistics(letterFrequencyMap, totalLetters, totalCharacters, wordCount);
+    }
+
+    private static void displaySummary(TextStatistics stats) {
         System.out.println("\nText Analysis Summary:");
-        System.out.println("Total words: " + wordCount);
-        System.out.println("Total letters: " + totalLetters);
-        System.out.println("Total characters (including spaces, punctuation): " + totalCharacters);
-        
-        // Calculate frequencies and percentages
+        System.out.println("Total words: " + stats.wordCount);
+        System.out.println("Total letters: " + stats.totalLetters);
+        System.out.println("Total characters (including spaces, punctuation): " + stats.totalCharacters);
+    }
+
+    private static void displayLetterFrequencies(Map<Character, Integer> letterFrequencyMap, int totalLetters) {
         Map<Character, Double> letterFrequencyPercentages = LanguageFrequencyAnalyzer.calculatePercentages(letterFrequencyMap, totalLetters);
         
-        // Display letter frequencies table with all languages
         System.out.println("\nLetter Frequency Analysis:");
         System.out.println("+---------+----------+-----------+---------------+---------------+---------------+---------------+---------------+");
         System.out.println("| Letter  | Count    | Your Text | English Std % | French Std % | German Std % | Italian Std % | Dutch Std %   |");
@@ -95,17 +115,19 @@ public class LetterFrequency {
                 
                 System.out.printf("| %-7c | %8d | %9.3f%% |", letter, count, percentage);
                 
-                // Print standard frequencies for each language
                 for (String lang : SUPPORTED_LANGUAGES) {
                     double standardFreq = LanguageFrequencyAnalyzer.getStandardFrequency(letter, lang.toUpperCase());
                     System.out.printf(" %11.3f%% |", standardFreq);
                 }
                 System.out.println();
             });
-            
-        System.out.println("+---------+----------+-----------+---------------+---------------+---------------+---------------+---------------+");
         
-        // Calculate differences for each language
+        System.out.println("+---------+----------+-----------+---------------+---------------+---------------+---------------+---------------+");
+    }
+
+    private static void displayLanguageAnalysis(Map<Character, Integer> letterFrequencyMap, int totalLetters) {
+        Map<Character, Double> letterFrequencyPercentages = LanguageFrequencyAnalyzer.calculatePercentages(letterFrequencyMap, totalLetters);
+        
         Map<String, Double> totalDifferences = new HashMap<>();
         for (String lang : SUPPORTED_LANGUAGES) {
             Map<Character, Double> differences = LanguageFrequencyAnalyzer.compareWithLanguage(letterFrequencyPercentages, lang.toUpperCase());
@@ -116,13 +138,11 @@ public class LetterFrequency {
             totalDifferences.put(lang, totalDiff);
         }
 
-        // Find the closest matching language
         String closestLanguage = totalDifferences.entrySet().stream()
             .min(Map.Entry.comparingByValue())
             .map(Map.Entry::getKey)
             .orElse("English");
 
-        // Display language analysis
         System.out.println("\nLanguage Analysis (lower difference means closer match):");
         System.out.println("+---------------+------------------+");
         System.out.println("| Language      | Total Difference |");
@@ -137,7 +157,19 @@ public class LetterFrequency {
             });
             
         System.out.println("+---------------+------------------+");
-        
-        textInputScanner.close();
+    }
+
+    private static class TextStatistics {
+        final Map<Character, Integer> letterFrequencyMap;
+        final int totalLetters;
+        final int totalCharacters;
+        final int wordCount;
+
+        TextStatistics(Map<Character, Integer> letterFrequencyMap, int totalLetters, int totalCharacters, int wordCount) {
+            this.letterFrequencyMap = letterFrequencyMap;
+            this.totalLetters = totalLetters;
+            this.totalCharacters = totalCharacters;
+            this.wordCount = wordCount;
+        }
     }
 }
