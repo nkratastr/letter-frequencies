@@ -1,0 +1,108 @@
+@startuml Language Detection System
+
+package com.letterfrequency {
+    class Main {
+        + {static} main(args: String[]): void
+    }
+}
+
+package com.letterfrequency.model {
+    enum Language {
+        ENGLISH
+        DUTCH
+        FRENCH
+        ITALIAN
+        GERMAN
+        - displayName: String
+        + getDisplayName(): String
+        + toString(): String
+    }
+}
+
+package com.letterfrequency.service {
+    interface LanguageDetectionService {
+        + detectLanguage(text: String): Language
+        + getLanguageScores(text: String): Map<Language, Double>
+    }
+
+    class CombinedLanguageDetectionService {
+        - FREQUENCY_WEIGHT: double
+        - LEVENSHTEIN_WEIGHT: double
+        - MIN_CONFIDENCE_THRESHOLD: double
+        - frequencyService: FrequencyAnalysisService
+        - levenshteinService: LevenshteinAnalysisService
+        + detectLanguage(text: String): Language
+        + getLanguageScores(text: String): Map<Language, Double>
+    }
+
+    class FrequencyAnalysisService {
+        - standardFrequencies: Map<Language, Map<Character, Double>>
+        - standardDigraphs: Map<Language, Map<String, Double>>
+        + detectLanguage(text: String): Language
+        + getLanguageScores(text: String): Map<Language, Double>
+        - calculateFrequencies(text: String): Map<Character, Double>
+        - calculateDigraphs(text: String): Map<String, Double>
+        - compareWithAllLanguages(frequencies: Map<Character, Double>): Map<Language, Double>
+        - compareDigraphsWithAllLanguages(digraphs: Map<String, Double>): Map<Language, Double>
+        - combineScores(letterScores: Map<Language, Double>, digraphScores: Map<Language, Double>): Map<Language, Double>
+    }
+
+    class LevenshteinAnalysisService {
+        - commonWords: Map<Language, List<String>>
+        + detectLanguage(text: String): Language
+        + getLanguageScores(text: String): Map<Language, Double>
+        - findClosestLanguage(word: String): Language
+        - calculateSimilarity(word1: String, word2: String): double
+        - calculateDistance(word1: String, word2: String): int
+        - normalizeScores(matches: Map<Language, Integer>): Map<Language, Double>
+    }
+}
+
+package com.letterfrequency.ui {
+    class ConsoleUI {
+        - scanner: Scanner
+        - languageService: LanguageDetectionService
+        + start(): void
+        - getUserInput(): String
+        - validateText(text: String): boolean
+        - displayResults(scores: Map<Language, Double>, bestMatch: Language): void
+    }
+}
+
+package com.letterfrequency.util {
+    class TextValidator {
+        - text: String
+        + validate(): ValidationResult
+        - containsLetters(): boolean
+    }
+
+    class ValidationResult {
+        - valid: boolean
+        - message: String
+        + isValid(): boolean
+        + getMessage(): String
+    }
+}
+
+' Relationships
+Main --> ConsoleUI: uses
+ConsoleUI --> LanguageDetectionService: uses
+ConsoleUI --> TextValidator: uses
+TextValidator --> ValidationResult: creates
+CombinedLanguageDetectionService ..|> LanguageDetectionService
+FrequencyAnalysisService ..|> LanguageDetectionService
+LevenshteinAnalysisService ..|> LanguageDetectionService
+CombinedLanguageDetectionService --> FrequencyAnalysisService: uses
+CombinedLanguageDetectionService --> LevenshteinAnalysisService: uses
+LanguageDetectionService --> Language: uses
+
+skinparam backgroundColor white
+skinparam classBackgroundColor LightBlue
+skinparam classBorderColor DarkBlue
+skinparam packageBackgroundColor LightGray
+skinparam packageBorderColor Gray
+skinparam arrowColor DarkBlue
+skinparam stereotypeCBackgroundColor LightYellow
+skinparam stereotypeCBorderColor DarkYellow
+
+@enduml

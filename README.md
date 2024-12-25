@@ -12,27 +12,41 @@ A Java program that calculates the frequency of letters in any input text and co
 - Uses both letter frequency analysis and Levenshtein distance algorithm to identify the input language
 - Identifies which language the text most closely matches
 
+## Project Structure
+The project follows a clean architecture with clear separation of concerns:
+
+![UML Class Diagram](docs/class-diagram.puml)
+
+### Packages
+- `com.letterfrequency` - Main application entry point
+- `com.letterfrequency.model` - Data models and enums
+- `com.letterfrequency.service` - Core language detection services
+- `com.letterfrequency.ui` - User interface components
+- `com.letterfrequency.util` - Utility classes
+
 ## Features
 - Multi-language support
 - Case-insensitive letter counting
 - Detailed frequency analysis
 - Dual language detection methods:
-  1. Letter frequency analysis
-  2. Levenshtein distance word matching
-- Language matching
+  1. Letter frequency analysis with digraph support
+  2. Levenshtein distance word matching with expanded word lists
+- Confidence scoring with threshold warnings
 - Comprehensive comparison tables
 
 ## How to Use
-1. Compile all required files:
+1. Make sure you have Java 11 or higher installed
+2. Clone the repository
+3. Build the project:
    ```bash
-   javac LetterFrequency.java LevenshteinAnalyzer.java LanguageCommonWords.java Language.java TextValidator.java LanguageFrequencyAnalyzer.java
+   javac src/main/java/com/letterfrequency/**/*.java
    ```
-2. Run the program: `java LetterFrequency`
-3. Enter your text when prompted (press Enter twice to finish)
-4. View the analysis results:
-   - Letter frequency table comparing with all supported languages
-   - Language analysis based on letter frequencies
-   - Word analysis using Levenshtein distance algorithm
+4. Run the program:
+   ```bash
+   java -cp src/main/java com.letterfrequency.Main
+   ```
+5. Enter your text when prompted (press Enter twice to finish)
+6. View the analysis results
 
 ## Output Format
 The program provides three main analysis sections:
@@ -41,15 +55,21 @@ The program provides three main analysis sections:
 3. Levenshtein Analysis - Shows language matches based on word similarity using the Levenshtein distance algorithm
 
 ## Technical Details
-The program uses two different approaches to detect the input language:
+The program uses three sophisticated approaches to detect the input language:
 
 1. **Letter Frequency Analysis**
    - Counts the frequency of each letter in the input text
    - Compares these frequencies with standard letter frequencies in supported languages
-   - Calculates the total difference to find the best matching language
+   - Uses Euclidean distance to measure similarity
 
-2. **Levenshtein Distance Analysis**
-   - Analyzes individual words (3 or more characters)
-   - Compares each word with common words from supported languages
-   - Uses Levenshtein distance algorithm to find the closest matching words
-   - Aggregates word matches to determine the most likely language
+2. **Digraph Analysis**
+   - Analyzes frequencies of two-letter combinations
+   - Compares with language-specific digraph patterns
+   - Provides additional accuracy for language detection
+
+3. **Levenshtein Distance Analysis**
+   - Compares input words with common words from each language
+   - Uses string similarity scoring
+   - Helps identify languages through vocabulary patterns
+
+The final language detection combines all three approaches with configurable weights and confidence thresholds.
