@@ -1,9 +1,11 @@
+package com.letterfrequency.model;
+
 public enum Language {
     ENGLISH("English"),
     DUTCH("Dutch"),
     FRENCH("French"),
     ITALIAN("Italian"),
-    GERMAN("German")
+    GERMAN("German");
 
     private final String displayName;
 
