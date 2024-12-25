@@ -3,6 +3,8 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.EnumMap;
+import java.util.Comparator;
 
 public class LetterFrequency {
     private static final List<String> SUPPORTED_LANGUAGES = List.of(
@@ -30,6 +32,7 @@ public class LetterFrequency {
         displaySummary(stats);
         displayLetterFrequencies(stats.letterFrequencyMap, stats.totalLetters);
         displayLanguageAnalysis(stats.letterFrequencyMap, stats.totalLetters);
+        analyzeWords(normalizedText);
         
         textInputScanner.close();
     }
@@ -157,6 +160,44 @@ public class LetterFrequency {
             });
             
         System.out.println("+---------------+------------------+");
+    }
+
+    private static void analyzeWords(String text) {
+        String[] words = text.toLowerCase().split("\\s+");
+        Map<Language, Integer> languageMatches = new EnumMap<>(Language.class);
+        
+        for (String word : words) {
+            if (word.length() >= 3) { // Only analyze words with 3 or more characters
+                Language closestLanguage = LevenshteinAnalyzer.findClosestLanguage(
+                    word, 
+                    LanguageCommonWords.getCommonWords()
+                );
+                languageMatches.merge(closestLanguage, 1, Integer::sum);
+            }
+        }
+        
+        // Display results
+        System.out.println("\nLevenshtein Analysis Results:");
+        System.out.println("+---------------+-------------+");
+        System.out.println("| Language      | Word Matches|");
+        System.out.println("+---------------+-------------+");
+        
+        Language bestMatch = languageMatches.entrySet().stream()
+            .max(Map.Entry.comparingByValue())
+            .map(Map.Entry::getKey)
+            .orElse(Language.ENGLISH);
+            
+        languageMatches.entrySet().stream()
+            .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+            .forEach(entry -> {
+                String marker = entry.getKey() == bestMatch ? " (Best Match)" : "";
+                System.out.printf("| %-13s | %11d |%s%n",
+                    entry.getKey().getDisplayName(),
+                    entry.getValue(),
+                    marker);
+            });
+        
+        System.out.println("+---------------+-------------+");
     }
 
     private static class TextStatistics {
