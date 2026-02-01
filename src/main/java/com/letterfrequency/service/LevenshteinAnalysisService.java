@@ -89,6 +89,11 @@ public class LevenshteinAnalysisService implements LanguageDetectionService {
         Map<Language, Double> normalizedScores = new EnumMap<>(Language.class);
         int total = matches.values().stream().mapToInt(Integer::intValue).sum();
 
+        // Initialize all languages with 0.0
+        for (Language lang : Language.values()) {
+            normalizedScores.put(lang, 0.0);
+        }
+
         if (total > 0) {
             matches.forEach((lang, count) ->
                 normalizedScores.put(lang, (double) count / total));

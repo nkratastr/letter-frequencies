@@ -1,105 +1,151 @@
-# Letter Frequency Calculator
+# Letter Frequency Language Detector
 
-A Java program that calculates the frequency of letters in any input text and compares it with standard frequencies in multiple languages. The program:
-- Takes text input from the user
-- Counts how often each letter appears (case-insensitive)
-- Compares frequencies with standard frequencies in:
-  - English
-  - French
-  - German
-  - Italian
-  - Dutch
-- Uses both letter frequency analysis and Levenshtein distance algorithm to identify the input language
-- Identifies which language the text most closely matches
+A sophisticated Java program that detects the language of input text using multiple analysis methods. The program combines five different detection algorithms for highly accurate language identification.
+
+## Supported Languages
+- English
+- French
+- German
+- Italian
+- Dutch
+
+## Detection Methods
+
+The program uses **five independent analysis methods** combined with dynamic weighting:
+
+1. **Letter Frequency Analysis** - Compares letter distributions using Euclidean distance
+2. **N-gram Analysis** - Analyzes character bigrams (2-letter sequences) characteristic of each language
+3. **Stopword Analysis** - Exact matching of common stopwords (100+ words per language)
+4. **Index of Coincidence (IC)** - Statistical measure of letter repetition probability
+5. **Levenshtein Distance** - Fuzzy word matching against common vocabulary
 
 ## Project Structure
-The project follows a clean architecture with clear separation of concerns:
 
-### Packages
-- `com.letterfrequency` - Main application entry point
-- `com.letterfrequency.model` - Data models and enums
-- `com.letterfrequency.service` - Core language detection services
-- `com.letterfrequency.ui` - User interface components
-- `com.letterfrequency.util` - Utility classes
+```
+src/main/java/com/letterfrequency/
+├── Main.java                    # Application entry point
+├── model/
+│   ├── Language.java            # Language enum
+│   ├── LanguageCommonWords.java # Common words database
+│   └── LanguageFrequencyAnalyzer.java
+├── service/
+│   ├── LanguageDetectionService.java      # Service interface
+│   ├── CombinedLanguageDetectionService.java  # Main detection orchestrator
+│   ├── FrequencyAnalysisService.java      # Letter frequency analysis
+│   ├── NgramAnalysisService.java          # Bigram analysis
+│   ├── StopwordAnalysisService.java       # Stopword matching
+│   ├── IndexOfCoincidenceService.java     # IC calculation
+│   └── LevenshteinAnalysisService.java    # Fuzzy word matching
+├── ui/
+│   └── ConsoleUI.java           # Console interface
+└── util/
+    └── TextValidator.java       # Input validation
+```
 
 ## Features
-- Multi-language support
-- Case-insensitive letter counting
-- Detailed frequency analysis
-- Dual language detection methods:
-  1. Letter frequency analysis
-  2. Levenshtein distance word matching
-- Combined scoring system
-- Color-coded comparison tables
+
+- **Multi-method detection** - Five independent algorithms for robust detection
+- **Dynamic weighting** - Weights adjust based on text length for optimal accuracy
+- **Detailed analysis** - View individual scores from each detection method
+- **Stopword counts** - See exact match counts per language
+- **Letter frequency comparison** - Color-coded frequency table
+- **Index of Coincidence** - Statistical language fingerprint
 
 ## How to Use
-1. Make sure you have Java 11 or higher installed
-2. Clone the repository
-3. Build the project:
-   ```bash
-   javac src/main/java/com/letterfrequency/**/*.java
-   ```
-4. Run the program:
-   ```bash
-   java -cp src/main/java com.letterfrequency.Main
-   ```
-5. Enter your text when prompted (press Enter twice to finish)
-6. View the analysis results
+
+### Prerequisites
+- Java 11 or higher
+
+### Build and Run
+
+```powershell
+# Navigate to project directory
+cd letter-frequencies
+
+# Compile all Java files
+$files = Get-ChildItem -Path src -Recurse -Filter *.java | ForEach-Object { $_.FullName }
+javac -d out $files
+
+# Run the program
+java -cp out com.letterfrequency.Main
+```
+
+Or as a single command:
+```powershell
+$files = Get-ChildItem -Path src -Recurse -Filter *.java | ForEach-Object { $_.FullName }; javac -d out $files; java -cp out com.letterfrequency.Main
+```
+
+### Usage
+1. Run the program
+2. Enter or paste your text
+3. Press Enter twice to submit
+4. View the comprehensive analysis results
 
 ## Example Output
 
 ### Language Detection Results
 ```
-+---------------+-------------+-------------+-------------+
-| Language      | Frequency  | Levenshtein | Combined   |
-+---------------+-------------+-------------+-------------+
-| English       |    85.23%  |    92.45%  |    88.12%  | (Best Match)
-| Dutch         |    82.15%  |    78.32%  |    80.62%  |
-| German        |    75.45%  |    82.18%  |    78.14%  |
-| French        |    72.33%  |    68.92%  |    70.96%  |
-| Italian       |    68.78%  |    65.45%  |    67.44%  |
-+---------------+-------------+-------------+-------------+
-```
-The table shows:
-- Frequency Score: How well the letter frequencies match each language
-- Levenshtein Score: How well the common words match each language
-- Combined Score: Weighted combination of both scores
-Higher percentages indicate better matches.
+Text Statistics: 229 characters, 36 words
+Calculated Index of Coincidence: 0.0630
 
-### Letter Frequencies Comparison
+Language Detection Results:
++---------------+-----------+-----------+-----------+-----------+-----------+-----------+
+| Language      | Frequency |  N-grams  | Stopwords |    IC     |Levenshtein| Combined  |
++---------------+-----------+-----------+-----------+-----------+-----------+-----------+
+| German        |    62.91% |    76.25% |   100.00% |    73.62% |    31.43% |    75.83%| *
+| Dutch         |    35.00% |    60.08% |    20.00% |    66.42% |    20.00% |    39.99%|
+| English       |    35.71% |    44.53% |    10.00% |    92.62% |    34.29% |    38.60%|
+| French        |    30.94% |    41.01% |     0.00% |    70.42% |     5.71% |    27.58%|
+| Italian       |     0.00% |    46.60% |     0.00% |    78.42% |     8.57% |    24.27%|
++---------------+-----------+-----------+-----------+-----------+-----------+-----------+
+* = Best Match
+
+Stopword Matches per Language:
+  German: 10 matches
+  Dutch: 2 matches
+  English: 1 matches
+  French: 0 matches
+  Italian: 0 matches
 ```
-+--------+----------+----------+----------+----------+----------+----------+
-| Letter | Input    | English  | French   | German   | Italian  | Dutch    |
-+--------+----------+----------+----------+----------+----------+----------+
-| a      |    8.17% |    8.17% |    7.64% |    6.52% |   11.75% |    7.49% |
-| b      |    1.50% |    1.50% |    0.90% |    1.89% |    0.92% |    1.58% |
-| c      |    2.78% |    2.78% |    3.26% |    2.73% |    4.50% |    1.24% |
-...etc...
-+--------+----------+----------+----------+----------+----------+----------+
-```
-Color coding in the frequency table:
-- Green: Very close match (difference < 0.5%)
-- Yellow: Moderate match (difference < 1.0%)
-- Red: Large difference (difference > 2.0%)
+
+### Column Explanations
+| Column | Description |
+|--------|-------------|
+| Frequency | Letter frequency similarity (Euclidean distance) |
+| N-grams | Bigram pattern similarity (cosine similarity) |
+| Stopwords | Common word exact match ratio |
+| IC | Index of Coincidence similarity |
+| Levenshtein | Fuzzy word matching score |
+| Combined | Weighted combination of all methods |
 
 ## Technical Details
-The program uses two sophisticated approaches to detect the input language:
 
-1. **Letter Frequency Analysis**
-   - Counts the frequency of each letter in the input text
-   - Compares these frequencies with standard letter frequencies in supported languages
-   - Uses Euclidean distance to measure similarity
+### Dynamic Weighting System
 
-2. **Levenshtein Distance Analysis**
-   - Compares input words with common words from each language
-   - Uses string similarity scoring
-   - Helps identify languages through vocabulary patterns
+Weights are adjusted based on text length for optimal accuracy:
 
-The final language detection combines both approaches with configurable weights:
-- Frequency Analysis: 60% weight
-- Levenshtein Analysis: 40% weight
+| Text Length | Frequency | N-grams | Stopwords | IC | Levenshtein |
+|-------------|-----------|---------|-----------|-----|-------------|
+| < 50 chars  | 10% | 15% | 45% | 10% | 20% |
+| < 200 chars | 15% | 20% | 35% | 15% | 15% |
+| < 500 chars | 20% | 25% | 30% | 15% | 10% |
+| ≥ 500 chars | 25% | 30% | 25% | 15% | 5% |
+
+**Rationale:** Short texts benefit from word-based matching (stopwords, Levenshtein), while longer texts allow statistical methods (frequency, n-grams) to be more reliable.
+
+### Index of Coincidence Values
+
+Expected IC values for each language:
+| Language | Expected IC |
+|----------|-------------|
+| English  | 0.0667 |
+| French   | 0.0778 |
+| German   | 0.0762 |
+| Italian  | 0.0738 |
+| Dutch    | 0.0798 |
 
 ## Contributing
+
 Feel free to contribute to this project by:
 1. Forking the repository
 2. Creating a feature branch
@@ -107,4 +153,5 @@ Feel free to contribute to this project by:
 4. Submitting a pull request
 
 ## License
+
 This project is licensed under the MIT License - see the LICENSE file for details.

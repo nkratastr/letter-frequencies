@@ -3,8 +3,11 @@ package com.letterfrequency.ui;
 import com.letterfrequency.model.Language;
 import com.letterfrequency.service.CombinedLanguageDetectionService;
 import com.letterfrequency.service.FrequencyAnalysisService;
+import com.letterfrequency.service.IndexOfCoincidenceService;
 import com.letterfrequency.service.LanguageDetectionService;
 import com.letterfrequency.service.LevenshteinAnalysisService;
+import com.letterfrequency.service.NgramAnalysisService;
+import com.letterfrequency.service.StopwordAnalysisService;
 import com.letterfrequency.util.TextValidator;
 import java.util.EnumMap;
 import java.util.Map;
@@ -68,17 +71,33 @@ public class ConsoleUI {
     }
     
     private void displayResults(String text, Map<Language, Double> scores, Language bestMatch) {
-        // Get individual scores
+        // Get individual scores from all services
         FrequencyAnalysisService freqService = new FrequencyAnalysisService();
         LevenshteinAnalysisService levService = new LevenshteinAnalysisService();
+        IndexOfCoincidenceService icService = new IndexOfCoincidenceService();
+        NgramAnalysisService ngramService = new NgramAnalysisService();
+        StopwordAnalysisService stopwordService = new StopwordAnalysisService();
+        
         Map<Language, Double> freqScores = freqService.getLanguageScores(text);
         Map<Language, Double> levScores = levService.getLanguageScores(text);
+        Map<Language, Double> icScores = icService.getLanguageScores(text);
+        Map<Language, Double> ngramScores = ngramService.getLanguageScores(text);
+        Map<Language, Double> stopwordScores = stopwordService.getLanguageScores(text);
+        
+        double calculatedIC = icService.calculateIC(text);
+        Map<Language, Integer> stopwordCounts = stopwordService.getStopwordMatchCounts(text);
 
-        // Display language detection results
+        // Display text statistics
+        int charCount = text.replaceAll("[^a-zA-Z]", "").length();
+        int wordCount = text.split("\\s+").length;
+        System.out.printf("\nText Statistics: %d characters, %d words%n", charCount, wordCount);
+        System.out.printf("Calculated Index of Coincidence: %.4f%n", calculatedIC);
+
+        // Display language detection results with all methods
         System.out.println("\nLanguage Detection Results:");
-        System.out.println("+---------------+-------------+-------------+-------------+");
-        System.out.println("| Language      | Frequency  | Levenshtein | Combined   |");
-        System.out.println("+---------------+-------------+-------------+-------------+");
+        System.out.println("+---------------+-----------+-----------+-----------+-----------+-----------+-----------+");
+        System.out.println("| Language      | Frequency |  N-grams  | Stopwords |    IC     |Levenshtein| Combined  |");
+        System.out.println("+---------------+-----------+-----------+-----------+-----------+-----------+-----------+");
         
         // Convert scores to percentages where higher is better
         Map<Language, Double> displayScores = new EnumMap<>(Language.class);
@@ -86,25 +105,47 @@ public class ConsoleUI {
             displayScores.put(lang, score * 100);
         });
         
+        // Find max frequency score for normalization (lower is better, so we invert)
+        double maxFreqScore = freqScores.values().stream().mapToDouble(Double::doubleValue).max().orElse(1.0);
+        
         displayScores.entrySet().stream()
             .sorted(Map.Entry.<Language, Double>comparingByValue().reversed())
             .forEach(entry -> {
                 Language lang = entry.getKey();
-                String marker = lang == bestMatch ? " (Best Match)" : "";
-                // Convert frequency score (lower is better) to percentage
-                double freqPercentage = (1 - freqScores.get(lang)) * 100;
-                // Levenshtein score is already in percentage form (higher is better)
+                String marker = lang == bestMatch ? " *" : "";
+                
+                // Convert frequency score (lower is better) to percentage (higher is better)
+                double freqPercentage = (1 - freqScores.get(lang) / maxFreqScore) * 100;
+                // N-gram score (higher is better)
+                double ngramPercentage = ngramScores.get(lang) * 100;
+                // Stopword score (higher is better)
+                double stopwordPercentage = stopwordScores.get(lang) * 100;
+                // IC score (higher is better)
+                double icPercentage = icScores.get(lang) * 100;
+                // Levenshtein score (higher is better)
                 double levPercentage = levScores.get(lang) * 100;
                 
-                System.out.printf("| %-13s | %9.2f%% | %9.2f%% | %9.2f%% |%s%n",
+                System.out.printf("| %-13s | %8.2f%% | %8.2f%% | %8.2f%% | %8.2f%% | %8.2f%% | %8.2f%%|%s%n",
                     lang.getDisplayName(),
                     freqPercentage,
+                    ngramPercentage,
+                    stopwordPercentage,
+                    icPercentage,
                     levPercentage,
                     entry.getValue(),
                     marker);
             });
         
-        System.out.println("+---------------+-------------+-------------+-------------+");
+        System.out.println("+---------------+-----------+-----------+-----------+-----------+-----------+-----------+");
+        System.out.println("* = Best Match");
+        
+        // Display stopword match counts
+        System.out.println("\nStopword Matches per Language:");
+        stopwordCounts.entrySet().stream()
+            .sorted(Map.Entry.<Language, Integer>comparingByValue().reversed())
+            .forEach(entry -> {
+                System.out.printf("  %s: %d matches%n", entry.getKey().getDisplayName(), entry.getValue());
+            });
 
         // Display letter frequencies
         Map<Character, Double> inputFrequencies = freqService.calculateFrequencies(text);
